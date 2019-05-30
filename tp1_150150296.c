@@ -4,17 +4,18 @@
     Problema: Piratas em alto mar
 
     Versão do compilador:
-    GCC version 4.2.1
-    Apple LLVM version 10.0.1 (clang-1001.0.46.4)
-    Target: x86_64-apple-darwin18.6.0
-    Thread model: posix
+        GCC version 4.2.1
+        Apple LLVM version 10.0.1 (clang-1001.0.46.4)
+        Target: x86_64-apple-darwin18.6.0
+        Thread model: posix
 
     Aluno: Tiago Rodrigues da Cunha Cabral
     Matrícula: 15/0150296
-    Descrição do problema: Em um mundo existem, muitas tripluações piratas, marinheiros e um rei dos piratas
-    O objetivo dos piratas é encontrar uma ilha para começar a utilizar seus recursos
-    O rei dos piratas quer também usar os recursos da ilha, e tem sempre vantagem sobre as tripulações.
-    Os marinheiros tem objetivo de expulsar os piratas da ilha.
+    Descrição do problema: 
+        Em um mundo existem, muitas tripluações piratas, marinheiros e um rei dos piratas
+        O objetivo dos piratas é encontrar uma ilha para começar a utilizar seus recursos
+        O rei dos piratas quer também usar os recursos da ilha, e tem sempre vantagem sobre as tripulações.
+        Os marinheiros tem objetivo de expulsar os piratas da ilha.
 */
 
 #include <stdlib.h>
@@ -22,44 +23,77 @@
 #include <pthread.h>
 #include <time.h>
 #include <unistd.h>
+#include <string.h>
 #include <semaphore.h>
 
 
 #define TRUE 1
+
+// Variaveis de controle da quantidade de entidades no programa
 #define QTD_TPIRATAS 5 // Quantidade de tripulacao de piratas
 #define QTD_REI_PIRATAS 1 // Quantidade de tripulacoes de reis de piratas
 #define QTD_TMARINHEIROS 1  // Quantidade de tripulacoes de marinheiros
-#define QTD_ILHAS 1 // Quantidade de ilhas no mundo
+#define QTD_ILHAS 2 // Quantidade de ilhas no mundo
+
+// Variaveis da quantidade de tempo dos eventos no programa
 #define TEMPO_NAVEGACAO 2 // Tempo que uma tripulacao passa navegando ate encontrar uma ilha
 #define TEMPO_MIN_USO 2 // Tempo que uma tripulacao passa obrigatoriamente usando a ilha
 
-// int ilhas_disponiveis = QTD_ILHAS;
+// Variaveis logicas para determinar estado de acesso a ilha
+#define DOMINIO_NEUTRO 0 // Define controle da ilha como neutro
+#define REI_PIRATA 1 // Define controle da ilha para rei dos piratas
+#define TRIPULACAO_PIRATA 2 // Define controle da ilha para a tripulacao pirata
+#define MARINHA 3 // Define controle da ilha para a marinha
+
 int ilhas_ocupadas = 0; // Quantidade de ilhas ocupadas, o maximo eh definido 
 int trip_rei_pirata = 0, trip_pirata = 0, trip_marinha = 0;
+int estado_ilhas[QTD_ILHAS]; // Vetor que armazena quem esta sob controle da ilha atualmente
 
 pthread_mutex_t mutex_ilhas = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_tripulacao = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t rp_cond = PTHREAD_COND_INITIALIZER;
+pthread_cond_t tp_cond = PTHREAD_COND_INITIALIZER;
 sem_t *sem_ilhas_livres;
+
+int determinar_ilha_para_tripulacao() {
+    int ilha=0;
+    ilha = (rand() % (QTD_ILHAS)); 
+    return ilha;
+}
 
 void* tripulacao_pirata(void *arg) {
     int id = *((int *)arg);
+    int ilha_destino = 0;
     printf("Tripulação pirata id: %d apareceu\n", id);
     while(TRUE) {
-        // // pirata comeca a navegar
-        // printf("TP %d navegando\n", id);
-        // sleep(rand() % TEMPO_NAVEGACAO);
-        // // sem_wait(sem_ilhas_livres);
-        // pthread_mutex_lock(&mutex_ilhas);
-        // ilhas_disponiveis--;
-        // printf("Tripulação pirata %d entrou na ilha\n", id);
-        // sleep(rand() % TEMPO_MIN_USO);
-        // ilhas_disponiveis++;
-        // printf("Tripulação pirata %d saiu da ilha\n", id);
-        // pthread_mutex_unlock(&mutex_ilhas);
-        // // sem_post(sem_ilhas_livres);
-        // sleep(1);
+        // pirata comeca a navegar
+        printf("TP %d navegando\n", id);
+        sleep(rand() % TEMPO_NAVEGACAO);
 
+        // chega em uma ilha
+        ilha_destino = determinar_ilha_para_tripulacao();
+
+        // verifica se existe alguem esperando para entrar
+
+        // se existe entra em batalha
+
+        // entra na ilha se nao existe mais ninguem esperando
+        pthread_mutex_lock(&mutex_ilhas);
+        trip_pirata++;
+        while(estado_ilhas[ilha_destino] != DOMINIO_NEUTRO || trip_rei_pirata > 0 ) {
+            printf("Tripulacao pirata %d aguardando ilha %d\n", id, ilha_destino);
+            pthread_cond_wait(&tp_cond,&mutex_ilhas);
+        }
+        trip_pirata--;
+        estado_ilhas[ilha_destino] = TRIPULACAO_PIRATA;
+        printf("Tripulação pirata %d entrou na ilha %d\n", id, ilha_destino);
+        sleep(rand() % TEMPO_MIN_USO);
+        estado_ilhas[ilha_destino] = DOMINIO_NEUTRO;
+        printf("Tripulação pirata %d saiu da ilha %d, estado atual: %d\n", id, ilha_destino, estado_ilhas[ilha_destino]);
+        pthread_cond_signal(&rp_cond);
+        pthread_cond_signal(&tp_cond);
+        pthread_mutex_unlock(&mutex_ilhas);
+        sleep(1);
     }
 
     pthread_exit(0);
@@ -67,25 +101,35 @@ void* tripulacao_pirata(void *arg) {
 
 void* rei_pirata(void *arg) {
     int id = *((int *)arg);
+    int ilha_destino = 0;
     printf("Rei pirata id: %d apareceu!\n", id);
     while(TRUE) {
-        // pirata comeca a navegar
+        // rei pirata comeca a navegar
         printf("RP %d navegando\n", id);
         sleep(rand() % TEMPO_NAVEGACAO);
-        // sem_wait(sem_ilhas_livres);
+
+        // chega em uma ilha
+        ilha_destino = determinar_ilha_para_tripulacao();
+
+        // verifica se existe alguem esperando para entrar
+
+        // se existe entra em batalha
+
+        // entra na ilha se nao existe mais ninguem esperando
         pthread_mutex_lock(&mutex_ilhas);
         trip_rei_pirata++;
-        while(ilhas_ocupadas == QTD_ILHAS) {
-            printf("Rei pirata aguardando ilha %d\n", id);
+        while(estado_ilhas[ilha_destino] != DOMINIO_NEUTRO) {
+            printf("Rei pirata %d aguardando ilha %d\n", id, ilha_destino);
             pthread_cond_wait(&rp_cond,&mutex_ilhas);
         }
         trip_rei_pirata--;
-        ilhas_ocupadas++;
-        printf("Tripulação do rei pirata %d entrou na ilha\n", id);
+        estado_ilhas[ilha_destino] = REI_PIRATA;
+        printf("Tripulação do rei pirata %d entrou na ilha %d\n", id, ilha_destino);
         sleep(rand() % TEMPO_MIN_USO);
-        ilhas_ocupadas--;
-        printf("Tripulação do rei pirata %d saiu da ilha, ilhas ocupadas: %d\n", id, ilhas_ocupadas);
+        estado_ilhas[ilha_destino] = DOMINIO_NEUTRO;
+        printf("Tripulação do rei pirata %d saiu da ilha %d, estado atual: %d\n", id, ilha_destino, estado_ilhas[ilha_destino]);
         pthread_cond_signal(&rp_cond);
+        pthread_cond_signal(&tp_cond);
         pthread_mutex_unlock(&mutex_ilhas);
         sleep(1);
     }
@@ -109,6 +153,8 @@ int main () {
     pthread_t tp_threads[QTD_TPIRATAS]; // threads de tripulacoes piratas
     pthread_t rp_threads[QTD_REI_PIRATAS]; // threads de rei dos piratas
     pthread_t tm_threads[QTD_TMARINHEIROS]; // threads de tripulacoes de marinheiros
+
+    memset(estado_ilhas, DOMINIO_NEUTRO, sizeof(int)); // inicializa vetor de dominio das ilhas como neutro
 
     // Inicializa as threads dos piratas
     for (i = 0; i < QTD_TPIRATAS; i++) {
