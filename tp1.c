@@ -56,6 +56,24 @@
 #define FORCA_MIN_RP 10 // forca minima que uma tripulacao de rei dos piratas pode ter
 #define FORCA_MAX_RP 20 // forca maxima que uma tripulacao de rei dos piratas pode ter
 
+/*
+Cores
+*/
+#define COLOR_BLACK "\x1b[30m"
+#define COLOR_RED "\x1b[31m"
+#define COLOR_GREEN "\x1b[32m"
+#define COLOR_YELLOW "\x1b[33m"
+#define COLOR_BLUE "\x1b[34m"
+#define COLOR_MAGENTA "\x1b[35m"
+#define COLOR_CYAN "\x1b[36m"
+#define COLOR_BRIGHT_RED "\x1b[91m"
+#define COLOR_BRIGHT_GREEN "\x1b[92m"
+#define COLOR_BRIGHT_YELLOW "\x1b[93m"
+#define COLOR_BRIGHT_BLUE "\x1b[94m"
+#define COLOR_BRIGHT_MAGENTA "\x1b[95m"
+#define COLOR_BRIGHT_CYAN "\x1b[96m"
+#define COLOR_RESET "\x1b[0m"
+
 int ilhas_ocupadas = 0; // Quantidade de ilhas ocupadas, o maximo eh definido 
 int trip_rei_pirata = 0, trip_pirata = 0, trip_marinha = 0;
 int duelo_pirata[QTD_ILHAS][2];
@@ -122,7 +140,7 @@ void* tripulacao_pirata(void *arg) {
     int tipo_trip = atributos_tp.tipo_trip;
     int perdeu_duelo = 0;
     int ilha_destino = 0;
-    printf("Tripulação pirata id: %d apareceu de forca %d\n", id, forca);
+    printf(COLOR_BRIGHT_BLUE "Tripulação pirata id: %d apareceu de forca %d\n" COLOR_RESET, id, forca);
     while(TRUE) {
         // // pirata comeca a navegar
         // printf("TP %d navegando\n", id);
@@ -164,7 +182,7 @@ void* rei_pirata(void *arg) {
     int tipo_trip = atributos_tp.tipo_trip;
     int perdeu_duelo = 0;
     int ilha_destino = 0;
-    printf("Rei pirata id: %d apareceu de forca %d\n", id, forca);
+    printf(COLOR_GREEN "Rei pirata id: %d apareceu de forca %d\n" COLOR_RESET, id, forca);
     while(TRUE) {
         // rei pirata comeca a navegar
         printf("RP %d navegando\n", id);
@@ -249,7 +267,7 @@ int main () {
     }
 
     CLEAR
-    printf("Inicializando...\n");
+    printf(COLOR_GREEN "Inicializando...\n" COLOR_RESET);
     sleep(2);
     CLEAR
 
