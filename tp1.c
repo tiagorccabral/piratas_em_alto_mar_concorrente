@@ -136,26 +136,22 @@ void* tripulacao_pirata(void *arg) {
         // se existe entra em batalha
 
         // entra na ilha se nao existe mais ninguem esperando
-        if (pthread_mutex_trylock(&mutex_ilhas[ilha_destino]) == 0) {
-            trip_pirata++;
-            while(estado_ilhas[ilha_destino].tipo_trip != DOMINIO_NEUTRO || trip_rei_pirata > 0) {
-                printf("Tripulação pirata %d aguardando ilha %d\n", id, ilha_destino);
-                pthread_cond_wait(&rp_cond[ilha_destino],&mutex_ilhas[ilha_destino]);
-            }
-            trip_pirata--;
-            estado_ilhas[ilha_destino].tipo_trip = tipo_trip;
-            printf("Tripulação pirata %d entrou na ilha %d\n", id, ilha_destino);
-            sleep(rand() % TEMPO_MIN_USO);
-            estado_ilhas[ilha_destino].tipo_trip = DOMINIO_NEUTRO;
-            printf("Tripulação pirata %d saiu da ilha %d, estado atual: %d\n", id, ilha_destino, estado_ilhas[ilha_destino].tipo_trip);
-            pthread_cond_signal(&rp_cond[ilha_destino]);
-            pthread_cond_signal(&tp_cond[ilha_destino]);
-            pthread_mutex_unlock(&mutex_ilhas[ilha_destino]);
-            sleep(1);
-        } else {
-            printf("Tripulação pirata %d não entrou na ilha %d\n", id, ilha_destino);
-            sleep(1);
+        pthread_mutex_lock(&mutex_ilhas[ilha_destino]);
+        trip_pirata++;
+        while(estado_ilhas[ilha_destino].tipo_trip != DOMINIO_NEUTRO || trip_rei_pirata > 0) {
+            printf("Tripulação pirata %d aguardando ilha %d\n", id, ilha_destino);
+            pthread_cond_wait(&rp_cond[ilha_destino],&mutex_ilhas[ilha_destino]);
         }
+        trip_pirata--;
+        estado_ilhas[ilha_destino].tipo_trip = tipo_trip;
+        printf("Tripulação pirata %d entrou na ilha %d\n", id, ilha_destino);
+        sleep(rand() % TEMPO_MIN_USO);
+        estado_ilhas[ilha_destino].tipo_trip = DOMINIO_NEUTRO;
+        printf("Tripulação pirata %d saiu da ilha %d, estado atual: %d\n", id, ilha_destino, estado_ilhas[ilha_destino].tipo_trip);
+        pthread_cond_signal(&rp_cond[ilha_destino]);
+        pthread_cond_signal(&tp_cond[ilha_destino]);
+        pthread_mutex_unlock(&mutex_ilhas[ilha_destino]);
+        sleep(1);
     }
 
     pthread_exit(0);
