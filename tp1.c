@@ -230,7 +230,7 @@ void* tripulacao_pirata(void *arg) {
                 printf(COLOR_GREEN "\nTripulação pirata %d entrou na ilha %d\n" COLOR_RESET, id, ilha_destino);
                 sleep(TEMPO_MIN_USO);
                 // estado_ilhas[ilha_destino].tipo_trip = DOMINIO_NEUTRO;
-                printf(COLOR_RED "Tripulação pirata %d saiu da ilha %d, estado atual: %d\n" COLOR_RESET, id, ilha_destino, estado_ilhas[ilha_destino].tipo_trip);
+                printf(COLOR_BRIGHT_RED "Tripulação pirata %d saiu da ilha %d, estado atual: %d\n" COLOR_RESET, id, ilha_destino, estado_ilhas[ilha_destino].tipo_trip);
                 pthread_mutex_unlock(&mutex_vencedores[ilha_destino]);
                 pthread_mutex_unlock(&mutex_ilhas[ilha_destino]);
             } else {
@@ -255,7 +255,7 @@ void* tripulacao_pirata(void *arg) {
                         venceu_batalha[ilha_destino] = -1;
                         printf(COLOR_GREEN "\nTripulação pirata %d entrou na ilha %d\n" COLOR_RESET, id, ilha_destino);
                         sleep(TEMPO_MIN_USO);
-                        printf(COLOR_RED "Tripulação pirata %d saiu depois de vencer, da ilha %d, estado atual: %d\n" COLOR_RESET, id, ilha_destino, estado_ilhas[ilha_destino].tipo_trip);
+                        printf(COLOR_BRIGHT_RED "Tripulação pirata %d saiu depois de vencer, da ilha %d, estado atual: %d\n" COLOR_RESET, id, ilha_destino, estado_ilhas[ilha_destino].tipo_trip);
                         pthread_mutex_unlock(&mutex_vencedores[ilha_destino]);
                         pthread_mutex_unlock(&mutex_ilhas[ilha_destino]);
                     } else {
@@ -291,7 +291,7 @@ void* rei_pirata(void *arg) {
                 printf(COLOR_GREEN "\nTripulação do rei pirata %d entrou na ilha %d\n" COLOR_RESET, id, ilha_destino);
                 sleep(TEMPO_MIN_USO);
                 // estado_ilhas[ilha_destino].tipo_trip = DOMINIO_NEUTRO;
-                printf(COLOR_RED "Tripulação do rei pirata %d saiu da ilha %d, estado atual: %d\n" COLOR_RESET, id, ilha_destino, estado_ilhas[ilha_destino].tipo_trip);
+                printf(COLOR_BRIGHT_RED "Tripulação do rei pirata %d saiu da ilha %d, estado atual: %d\n" COLOR_RESET, id, ilha_destino, estado_ilhas[ilha_destino].tipo_trip);
                 pthread_mutex_unlock(&mutex_vencedores[ilha_destino]);
                 pthread_mutex_unlock(&mutex_ilhas[ilha_destino]);
             } else {
@@ -316,7 +316,7 @@ void* rei_pirata(void *arg) {
                         venceu_batalha[ilha_destino] = -1;
                         printf(COLOR_GREEN "\nTripulação do rei pirata %d entrou na ilha %d\n" COLOR_RESET, id, ilha_destino);
                         sleep(TEMPO_MIN_USO);
-                        printf(COLOR_RED "Tripulação do rei pirata %d saiu depois de vencer, da ilha %d, estado atual: %d\n" COLOR_RESET, id, ilha_destino, estado_ilhas[ilha_destino].tipo_trip);
+                        printf(COLOR_BRIGHT_RED "Tripulação do rei pirata %d saiu depois de vencer, da ilha %d, estado atual: %d\n" COLOR_RESET, id, ilha_destino, estado_ilhas[ilha_destino].tipo_trip);
                         pthread_mutex_unlock(&mutex_vencedores[ilha_destino]);
                         pthread_mutex_unlock(&mutex_ilhas[ilha_destino]);
                     } else {
