@@ -90,7 +90,6 @@ vec_int_t batalha_na_ilha[QTD_ILHAS];
 pthread_mutex_t mutex_ilhas[QTD_ILHAS];
 pthread_mutex_t mutex_tripulacao = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_trip_quer_entrar = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t turno = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_em_batalha[QTD_ILHAS];
 pthread_mutex_t mutex_desafiante[QTD_ILHAS];
 pthread_mutex_t mutex_vencedores[QTD_ILHAS];
