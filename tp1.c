@@ -38,14 +38,14 @@
 // Variaveis de controle da quantidade de entidades no programa
 #define QTD_TPIRATAS 6 // Quantidade de tripulacao de piratas
 #define QTD_REI_PIRATAS 3 // Quantidade de tripulacoes de reis de piratas
-#define QTD_TMARINHEIROS 0  // Quantidade de tripulacoes de marinheiros
+#define QTD_TMARINHEIROS 1  // Quantidade de tripulacoes de marinheiros
 #define QTD_ILHAS 2 // Quantidade de ilhas no mundo
 
 // Variaveis da quantidade de tempo dos eventos no programa
 #define TEMPO_NAVEGACAO 2 // Tempo que uma tripulacao passa navegando ate encontrar uma ilha
 #define TEMPO_MIN_USO 6 // Tempo que uma tripulacao passa obrigatoriamente usando a ilha
 #define TEMPO_NAVEGACAO_MARINHA 30 // Tempo que uma tripulacao da marinha passa navegando
-#define TEMPO_MARINHA_ILHA 5 // Tempo que uma tripulacao da marinha passa navegando
+#define TEMPO_MARINHA_ILHA 10 // Tempo que uma tripulacao da marinha passa navegando
 #define TEMPO_DURACAO_BATALHA 2 // Tempo que dura em media uma batalha
 
 // Variaveis logicas para determinar estado de acesso a ilha
@@ -153,7 +153,7 @@ void* decide_batalhas(void *arg) {
     int i = *(int *)(arg);
     while(TRUE) {
         pthread_mutex_lock(&mutex_desafiante[i]);
-        if (batalha_na_ilha[i].length == 2) {
+        if (batalha_na_ilha[i].length == 2 && marinha_sob_controle[i] == 0) {
             pthread_mutex_lock(&mutex_printando_batalha[i]);
             printf("\n ========================= \n");
             printf(COLOR_BRIGHT_YELLOW "\nTemos aqui um duelo! Uma batalha pela ilha %d\n" COLOR_RESET, i);
@@ -172,7 +172,7 @@ void* decide_batalhas(void *arg) {
             pthread_mutex_unlock(&mutex_printando_batalha[i]);
             pthread_mutex_unlock(&mutex_vencedores[i]);
             pthread_cond_broadcast(&ilha_em_batalha[i]);
-        } else if (batalha_na_ilha[i].length >= 3) {
+        } else if (batalha_na_ilha[i].length >= 3 && marinha_sob_controle[i] == 0) {
             pthread_mutex_lock(&mutex_vencedores[i]);
             pthread_mutex_lock(&mutex_printando_batalha[i]);
             printf(COLOR_BRIGHT_YELLOW "\nTemos um  Battle Royale! Uma batalha pela ilha %d\n" COLOR_RESET, i);
@@ -220,7 +220,7 @@ void* tripulacao_pirata(void *arg) {
                 printf(COLOR_GREEN "\nTripulação pirata %d entrou na ilha %d\n" COLOR_RESET, id, ilha_destino);
                 sleep(TEMPO_MIN_USO);
                 // estado_ilhas[ilha_destino].tipo_trip = DOMINIO_NEUTRO;
-                printf(COLOR_BRIGHT_RED "Tripulação pirata %d saiu da ilha %d, estado atual: %d\n" COLOR_RESET, id, ilha_destino, estado_ilhas[ilha_destino].tipo_trip);
+                printf(COLOR_BRIGHT_RED "Tripulação pirata %d saiu da ilha %d\n" COLOR_RESET, id, ilha_destino);
                 pthread_mutex_unlock(&mutex_vencedores[ilha_destino]);
                 pthread_mutex_unlock(&mutex_ilhas[ilha_destino]);
             } else {
@@ -244,7 +244,7 @@ void* tripulacao_pirata(void *arg) {
                         venceu_batalha[ilha_destino] = -1;
                         printf(COLOR_GREEN "\nTripulação pirata %d entrou na ilha %d\n" COLOR_RESET, id, ilha_destino);
                         sleep(TEMPO_MIN_USO);
-                        printf(COLOR_BRIGHT_RED "Tripulação pirata %d saiu depois de vencer, da ilha %d, estado atual: %d\n" COLOR_RESET, id, ilha_destino, estado_ilhas[ilha_destino].tipo_trip);
+                        printf(COLOR_BRIGHT_RED "Tripulação pirata %d saiu depois de vencer, da ilha %d\n" COLOR_RESET, id, ilha_destino);
                         pthread_mutex_unlock(&mutex_vencedores[ilha_destino]);
                         pthread_mutex_unlock(&mutex_ilhas[ilha_destino]);
                     } else {
@@ -278,7 +278,7 @@ void* rei_pirata(void *arg) {
                 printf(COLOR_GREEN "\nTripulação do rei pirata %d entrou na ilha %d\n" COLOR_RESET, id, ilha_destino);
                 sleep(TEMPO_MIN_USO);
                 // estado_ilhas[ilha_destino].tipo_trip = DOMINIO_NEUTRO;
-                printf(COLOR_BRIGHT_RED "Tripulação do rei pirata %d saiu da ilha %d, estado atual: %d\n" COLOR_RESET, id, ilha_destino, estado_ilhas[ilha_destino].tipo_trip);
+                printf(COLOR_BRIGHT_RED "Tripulação do rei pirata %d saiu da ilha %d\n" COLOR_RESET, id, ilha_destino);
                 pthread_mutex_unlock(&mutex_vencedores[ilha_destino]);
                 pthread_mutex_unlock(&mutex_ilhas[ilha_destino]);
             } else {
@@ -302,7 +302,7 @@ void* rei_pirata(void *arg) {
                         venceu_batalha[ilha_destino] = -1;
                         printf(COLOR_GREEN "\nTripulação do rei pirata %d entrou na ilha %d\n" COLOR_RESET, id, ilha_destino);
                         sleep(TEMPO_MIN_USO);
-                        printf(COLOR_BRIGHT_RED "Tripulação do rei pirata %d saiu depois de vencer, da ilha %d, estado atual: %d\n" COLOR_RESET, id, ilha_destino, estado_ilhas[ilha_destino].tipo_trip);
+                        printf(COLOR_BRIGHT_RED "Tripulação do rei pirata %d saiu depois de vencer, da ilha %d\n" COLOR_RESET, id, ilha_destino);
                         pthread_mutex_unlock(&mutex_vencedores[ilha_destino]);
                         pthread_mutex_unlock(&mutex_ilhas[ilha_destino]);
                     } else {
@@ -329,12 +329,16 @@ void* tripulacao_marinha(void *arg) {
         // chega em uma ilha
         ilha_destino = determinar_ilha_para_tripulacao();
 
+        pthread_mutex_lock(&mutex_ilhas[ilha_destino]);
         pthread_mutex_lock(&marinha_na_ilha[ilha_destino]);
         marinha_sob_controle[ilha_destino] = 1;
         printf(COLOR_BRIGHT_MAGENTA "Marinha %d está sob controle da ilha %d\n" COLOR_RESET, id, ilha_destino);
+        printf(COLOR_BRIGHT_MAGENTA "Marinha %d evitará novas batalhas na ilha %d\n" COLOR_RESET, id, ilha_destino);
         sleep(TEMPO_MARINHA_ILHA);
         printf(COLOR_BRIGHT_MAGENTA "Marinha %d esta saindo da ilha %d\n" COLOR_RESET, id, ilha_destino);
+        marinha_sob_controle[ilha_destino] = 0;
         pthread_mutex_unlock(&marinha_na_ilha[ilha_destino]);
+        pthread_mutex_unlock(&mutex_ilhas[ilha_destino]);
     }
 
     pthread_exit(0);
