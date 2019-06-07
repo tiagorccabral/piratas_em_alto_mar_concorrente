@@ -87,7 +87,7 @@ int venceu_batalha[QTD_ILHAS];
 int marinha_sob_controle[QTD_ILHAS];
 vec_int_t batalha_na_ilha[QTD_ILHAS];
 
-pthread_mutex_t mutex_ilhas[QTD_ILHAS] = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_ilhas[QTD_ILHAS];
 pthread_mutex_t mutex_tripulacao = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_trip_quer_entrar = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t turno = PTHREAD_MUTEX_INITIALIZER;
@@ -119,7 +119,7 @@ atributos_tripulacao estado_ilhas[QTD_ILHAS]; // Vetor que armazena quem esta so
 
 // Randomiza a forca para as tripulacoes de piratas ou rei piratas
 int inicializa_forca_tripulacoes(int tripulacoes[], int tipo) {
-    int i=0, forca, erro = 0;
+    int i=0, erro = 0;
     srand(time(NULL)); 
     if (tipo == TRIPULACAO_PIRATA) {
         for (i=0;i<QTD_TPIRATAS;i++) {
@@ -208,8 +208,6 @@ void* tripulacao_pirata(void *arg) {
     atributos_tripulacao atributos_tp = *((atributos_tripulacao *)arg);
     int id = atributos_tp.id;
     int forca = atributos_tp.forca;
-    int tipo_trip = atributos_tp.tipo_trip;
-    int perdeu_duelo = 0;
     int ilha_destino = 0;
     printf(COLOR_BRIGHT_BLUE "Tripulação pirata id: %d apareceu de forca %d\n" COLOR_RESET, id, forca);
     while(TRUE) {
@@ -274,8 +272,6 @@ void* rei_pirata(void *arg) {
     atributos_tripulacao atributos_tp = *((atributos_tripulacao *)arg);
     int id = atributos_tp.id;
     int forca = atributos_tp.forca;
-    int tipo_trip = atributos_tp.tipo_trip;
-    int perdeu_duelo = 0;
     int ilha_destino = 0;
     printf(COLOR_GREEN "Rei pirata id: %d apareceu de forca %d\n" COLOR_RESET, id, forca);
     while(TRUE) {
@@ -362,8 +358,6 @@ int main () {
     pthread_t rp_threads[QTD_REI_PIRATAS]; // threads de rei dos piratas
     pthread_t tm_threads[QTD_TMARINHEIROS]; // threads de tripulacoes de marinheiros
     pthread_t t_decide_batalhas[QTD_ILHAS]; // threads de tripulacoes de marinheiros
-
-    atributos_tripulacao atributos;
 
     vec_init(&batalha_na_ilha); // vetor dinamico que armazena tripulacoes que irao entrar em combate
 
