@@ -99,11 +99,6 @@ pthread_mutex_t batalha_decidida[QTD_ILHAS];
 pthread_mutex_t mutex_printando_batalha[QTD_ILHAS];
 pthread_cond_t mutex_ilhas_ocupdas[QTD_ILHAS];
 pthread_cond_t ilha_em_batalha[QTD_ILHAS];
-pthread_cond_t rp_cond[QTD_ILHAS];
-pthread_cond_t tp_cond[QTD_ILHAS];
-pthread_cond_t cond_ilhas_ocupadas[QTD_ILHAS];
-sem_t *sem_ilhas_livres[QTD_ILHAS];
-sem_t *sem_ilhas[QTD_ILHAS];
 
 // Struct que determina a forca de uma tripulacao pirata
 typedef struct {
@@ -158,7 +153,6 @@ int realiza_batalha(int ilha) {
 void* decide_batalhas(void *arg) {
     int i = *(int *)(arg);
     while(TRUE) {
-        // for (i=0; i<QTD_ILHAS; i++) {
         pthread_mutex_lock(&mutex_desafiante[i]);
         if (batalha_na_ilha[i].length == 2) {
             pthread_mutex_lock(&mutex_printando_batalha[i]);
@@ -200,8 +194,7 @@ void* decide_batalhas(void *arg) {
         }
         pthread_mutex_unlock(&mutex_desafiante[i]);
     }
-    sleep(0);
-    // }
+    sleep(1);
 }
 
 void* tripulacao_pirata(void *arg) {
@@ -244,7 +237,6 @@ void* tripulacao_pirata(void *arg) {
                         pthread_cond_wait(&ilha_em_batalha[ilha_destino], &mutex_desafiante[ilha_destino]);
                     }
                     pthread_mutex_unlock(&mutex_desafiante[ilha_destino]);
-                    // pthread_mutex_lock(&batalha_decidida[ilha_destino]);
                     if (venceu_batalha[ilha_destino] == id) {
                         pthread_mutex_lock(&mutex_ilhas[ilha_destino]);
                         pthread_mutex_lock(&mutex_vencedores[ilha_destino]);
@@ -303,7 +295,6 @@ void* rei_pirata(void *arg) {
                         pthread_cond_wait(&ilha_em_batalha[ilha_destino], &mutex_desafiante[ilha_destino]);
                     }
                     pthread_mutex_unlock(&mutex_desafiante[ilha_destino]);
-                    // pthread_mutex_lock(&batalha_decidida[ilha_destino]);
                     if (venceu_batalha[ilha_destino] == id) {
                         pthread_mutex_lock(&mutex_ilhas[ilha_destino]);
                         pthread_mutex_lock(&mutex_vencedores[ilha_destino]);
@@ -327,6 +318,7 @@ void* rei_pirata(void *arg) {
     pthread_exit(0);
 }
 
+// funcao que controla o comportamento da thread que controla a tripulacao da marinha
 void* tripulacao_marinha(void *arg) {
     int id = *((int *)arg);
     int ilha_destino = 0;
@@ -371,6 +363,7 @@ int main () {
         estado_ilhas[i].forca = 0;
     }
 
+    // inicializa de vetor controlador de vencedores de batalhas
     for (i=0; i<QTD_ILHAS; i++) {
         venceu_batalha[i] = -1;
     }
@@ -379,46 +372,37 @@ int main () {
         marinha_sob_controle[i] = 0;
     }
     
+    // inicializa vetor de mutex controlador de acesso a ilha[x]
     for (i=0; i<QTD_ILHAS; i++) {
         pthread_mutex_init(&mutex_ilhas[i], NULL);
     }
     
+    // inicializa vetor de mutex que controla o vencedor da batalha na ilha [x]
     for (i=0; i<QTD_ILHAS; i++) {
         pthread_mutex_init(&mutex_vencedores[i], NULL);
     }
     
+    // inicializa vetor de mutex que controla se uma ilha esta em batalha ou nao
     for (i=0; i<QTD_ILHAS; i++) {
         pthread_mutex_init(&mutex_em_batalha[i], NULL);
     }
     
+    // inicializa vetor de mutex que controla se existe um desafiante esperando para batalhar por uma ilha
     for (i=0; i<QTD_ILHAS; i++) {
         pthread_mutex_init(&mutex_desafiante[i], NULL);
     }
     
+    // inicializa vetor de mutex que controla se existe uma tripulacao de marinha na ilha[x] 
     for (i=0; i<QTD_ILHAS; i++) {
         pthread_mutex_init(&marinha_na_ilha[i], NULL);
     }
     
+    // inicializa vetor de mutex que controla se a thread controladora de batalha esta ou nao printando alguma coisa
     for (i=0; i<QTD_ILHAS; i++) {
         pthread_mutex_init(&mutex_printando_batalha[i], NULL);
     }
-    
-    for (i=0; i<QTD_ILHAS; i++) {
-        pthread_mutex_init(&batalha_decidida[i], NULL);
-    }
-    
-    for (i=0; i<QTD_ILHAS; i++) {
-        pthread_cond_init(&cond_ilhas_ocupadas[i], NULL);
-    }
 
-    for (i=0; i<QTD_ILHAS; i++) {
-        pthread_cond_init(&tp_cond[i], NULL);
-    }
-
-    for (i=0; i<QTD_ILHAS; i++) {
-        pthread_cond_init(&rp_cond[i], NULL);
-    }
-
+    // inicializa vetor de variaveis de condicao que coloca as threads para dormir quando existe uma batalha em andamento
     for (i=0; i<QTD_ILHAS; i++) {
         pthread_cond_init(&ilha_em_batalha[i], NULL);
     }
@@ -486,23 +470,6 @@ int main () {
         }
         k++;
     }
-
-    for (i=0; i<QTD_ILHAS; i++) {
-        sem_ilhas[i] = sem_open("/sem_ilhas", O_CREAT, 0644, QTD_ILHAS);
-    }
-    // sem_ilhas = sem_open("/sem_ilhas", O_CREAT, 0644, 0);
-    // if (sem_ilhas == SEM_FAILED) {
-    //     perror("Falha ao abrir semaforo");
-    //     exit(-1);
-    // }
-
-    for (i=0; i<QTD_ILHAS; i++) {
-        sem_ilhas_livres[i] = sem_open("/sem_ilhas_livres", O_CREAT, 0644, 0);
-    }
-    // if (sem_ilhas_livres == SEM_FAILED) {
-    //     perror("Falha ao abrir semaforo");
-    //     exit(-1);
-    // }
 
     // Inicializa as threads das tripulacoes de marinheiros
     for (i = 0; i < QTD_TMARINHEIROS; i++) {
